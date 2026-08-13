@@ -1,0 +1,13 @@
+[package]
+name = "nodima-runner-sdk"
+version = "0.1.0"
+edition = "2021"
+description = "Rust guest SDK for Nodima Studio WASI node packages"
+license = "MIT"
+
+[dependencies]
+arrow-array = "55"
+arrow-ipc = "55"
+arrow-schema = "55"
+ciborium = "0.2"
+serde = { version = "1", features = ["derive"] }

@@ -1,0 +1,20 @@
+name: SDK conformance
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test ./...
+      - run: go vet ./...
+      - run: cargo fmt --manifest-path rust/Cargo.toml --check
+      - run: cargo check --manifest-path rust/Cargo.toml --locked
