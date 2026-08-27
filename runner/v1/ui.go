@@ -30,6 +30,17 @@ type UIConfigField struct {
 	Help        []string            `json:"help,omitempty"`
 	Options     []UIConfigOption    `json:"options,omitempty"`
 	VisibleWhen []UIVisibleWhenRule `json:"visibleWhen,omitempty"`
+	Editor      *UIConfigEditor     `json:"editor,omitempty"`
+}
+
+// UIConfigEditor describes an optional structured editor for an underlying
+// string configuration value. The runner continues to receive the serialized
+// string, so editor metadata has no effect on execution contracts.
+type UIConfigEditor struct {
+	Kind          string   `json:"kind"`
+	Types         []string `json:"types,omitempty"`
+	DefaultType   string   `json:"defaultType,omitempty"`
+	AllowBareName bool     `json:"allowBareName,omitempty"`
 }
 
 type UIConfigOption struct {
@@ -98,6 +109,30 @@ func (m UIManifest) Validate() error {
 		}
 		if field.Kind == "select" && len(field.Options) == 0 {
 			return fmt.Errorf("runner UI select field %q requires options", field.Key)
+		}
+		if field.Editor != nil {
+			if field.Kind != "text" {
+				return fmt.Errorf("runner UI field %q structured editor requires text kind", field.Key)
+			}
+			if field.Editor.Kind != "column-schema" {
+				return fmt.Errorf("runner UI field %q has invalid editor kind %q", field.Key, field.Editor.Kind)
+			}
+			if len(field.Editor.Types) == 0 || len(field.Editor.Types) > 100 {
+				return fmt.Errorf("runner UI field %q column-schema editor requires 1 to 100 types", field.Key)
+			}
+			types := make(map[string]struct{}, len(field.Editor.Types))
+			for _, typeName := range field.Editor.Types {
+				if strings.TrimSpace(typeName) == "" || len(typeName) > 100 {
+					return fmt.Errorf("runner UI field %q has an invalid editor type", field.Key)
+				}
+				if _, exists := types[typeName]; exists {
+					return fmt.Errorf("runner UI field %q repeats editor type %q", field.Key, typeName)
+				}
+				types[typeName] = struct{}{}
+			}
+			if _, exists := types[field.Editor.DefaultType]; !exists {
+				return fmt.Errorf("runner UI field %q editor default type %q is not listed", field.Key, field.Editor.DefaultType)
+			}
 		}
 	}
 	for _, field := range m.Fields {
