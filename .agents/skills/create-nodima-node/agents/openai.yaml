@@ -1,0 +1,4 @@
+interface:
+  display_name: "Create Nodima Node"
+  short_description: "Build and verify a portable Nodima node"
+  default_prompt: "Use $create-nodima-node to create a new Nodima node from my requirements."

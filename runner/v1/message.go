@@ -14,15 +14,18 @@ const ABIVersion = "dbminer.runner.v1alpha1"
 type MessageType string
 
 const (
-	MessageInitialize         MessageType = "initialize"
-	MessageReady              MessageType = "ready"
-	MessageInputBatch         MessageType = "input_batch"
-	MessageOutputBatch        MessageType = "output_batch"
-	MessageInputEnd           MessageType = "input_end"
-	MessageCompleted          MessageType = "completed"
-	MessageFailed             MessageType = "failed"
-	MessageLog                MessageType = "log"
-	MessageProgress           MessageType = "progress"
+	MessageInitialize  MessageType = "initialize"
+	MessageReady       MessageType = "ready"
+	MessageInputBatch  MessageType = "input_batch"
+	MessageOutputBatch MessageType = "output_batch"
+	MessageInputEnd    MessageType = "input_end"
+	MessageCompleted   MessageType = "completed"
+	MessageFailed      MessageType = "failed"
+	MessageLog         MessageType = "log"
+	MessageProgress    MessageType = "progress"
+	// MessageHostResources is emitted only by a trusted execution host or
+	// agent. Runner implementations must not use it.
+	MessageHostResources      MessageType = "host_resources"
 	MessageBatchComplete      MessageType = "batch_complete"
 	MessageCapabilityRequest  MessageType = "capability_request"
 	MessageCapabilityResponse MessageType = "capability_response"
@@ -55,6 +58,7 @@ type Message struct {
 	Error              *Failure            `cbor:"error,omitempty"`
 	Log                *Log                `cbor:"log,omitempty"`
 	Progress           *Progress           `cbor:"progress,omitempty"`
+	HostResources      *HostResources      `cbor:"host_resources,omitempty"`
 	CapabilityRequest  *CapabilityRequest  `cbor:"capability_request,omitempty"`
 	CapabilityResponse *CapabilityResponse `cbor:"capability_response,omitempty"`
 	SessionStart       *SessionStart       `cbor:"session_start,omitempty"`
@@ -79,6 +83,42 @@ type Progress struct {
 	RowsProcessed uint64 `cbor:"rows_processed"`
 	BytesRead     uint64 `cbor:"bytes_read"`
 	BytesWritten  uint64 `cbor:"bytes_written"`
+}
+
+// HostResources is a machine-wide resource observation collected by the
+// execution host. It intentionally remains separate from Progress, which is
+// reported by a runner and is scoped to that runner's work.
+//
+// Start and End distinguish the synchronous samples at the lifetime bounds of
+// a host session. Periodic samples set both flags to false.
+type HostResources struct {
+	Memory *MemoryResources `cbor:"memory,omitempty"`
+	Start  bool             `cbor:"start,omitempty"`
+	End    bool             `cbor:"end,omitempty"`
+}
+
+// MemoryResources describes whole-computer physical memory at one instant.
+// UsedBytes is TotalBytes minus the operating system's reported available
+// memory, so it includes unrelated processes and operating-system caches.
+type MemoryResources struct {
+	TotalBytes uint64 `cbor:"total_bytes"`
+	UsedBytes  uint64 `cbor:"used_bytes"`
+}
+
+func (h HostResources) Validate() error {
+	if h.Start && h.End {
+		return errors.New("host resources sample cannot be both start and end")
+	}
+	if h.Memory == nil {
+		return errors.New("host resources message requires memory content")
+	}
+	if h.Memory.TotalBytes == 0 {
+		return errors.New("host resources memory total must be positive")
+	}
+	if h.Memory.UsedBytes > h.Memory.TotalBytes {
+		return errors.New("host resources memory used exceeds total")
+	}
+	return nil
 }
 
 type CapabilityRequest struct {
@@ -383,6 +423,13 @@ func (m Message) Validate() error {
 	case MessageProgress:
 		if m.Progress == nil {
 			return errors.New("progress message requires progress content")
+		}
+	case MessageHostResources:
+		if m.HostResources == nil {
+			return errors.New("host_resources message requires resource content")
+		}
+		if err := m.HostResources.Validate(); err != nil {
+			return err
 		}
 	case MessageCapabilityRequest:
 		if m.CapabilityRequest == nil {
