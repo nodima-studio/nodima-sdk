@@ -7,7 +7,7 @@ use arrow_ipc::reader::StreamReader;
 use arrow_ipc::writer::StreamWriter;
 use serde::{Deserialize, Serialize};
 
-pub const ABI_VERSION: &str = "dbminer.runner.v1alpha1";
+pub const ABI_VERSION: &str = "dbminer.runner.v1alpha2";
 const MAGIC: &[u8; 4] = b"DBM\x01";
 const CONTROL: u8 = 1;
 const ARROW_BATCH: u8 = 2;

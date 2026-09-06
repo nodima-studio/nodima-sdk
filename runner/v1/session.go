@@ -43,16 +43,17 @@ type SessionStart struct {
 }
 
 type SessionNode struct {
-	NodeID        string            `cbor:"node_id"`
-	PackageID     string            `cbor:"package_id"`
-	Version       string            `cbor:"version"`
-	Config        map[string]string `cbor:"config,omitempty"`
-	InputPorts    []string          `cbor:"input_ports,omitempty"`
-	OutputPorts   []string          `cbor:"output_ports,omitempty"`
-	Capabilities  []Capability      `cbor:"capabilities,omitempty"`
-	PackageDigest string            `cbor:"package_digest,omitempty"`
-	RunnerGrant   *RunnerGrant      `cbor:"runner_grant,omitempty"`
-	SecretValues  map[string]string `cbor:"secret_values,omitempty"`
+	NodeID         string            `cbor:"node_id"`
+	PackageID      string            `cbor:"package_id"`
+	Version        string            `cbor:"version"`
+	Config         map[string]string `cbor:"config,omitempty"`
+	InputPorts     []string          `cbor:"input_ports,omitempty"`
+	OutputPorts    []string          `cbor:"output_ports,omitempty"`
+	StopWhenUnused bool              `cbor:"stop_when_unused,omitempty"`
+	Capabilities   []Capability      `cbor:"capabilities,omitempty"`
+	PackageDigest  string            `cbor:"package_digest,omitempty"`
+	RunnerGrant    *RunnerGrant      `cbor:"runner_grant,omitempty"`
+	SecretValues   map[string]string `cbor:"secret_values,omitempty"`
 	// SpillLimits are effective host limits for trusted spilling built-ins.
 	// Installed packages continue to use RunnerGrant.Scratch instead.
 	SpillLimits    *SpillLimits `cbor:"spill_limits,omitempty"`

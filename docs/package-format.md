@@ -27,7 +27,7 @@ fields are rejected. A minimal example is:
   "formatVersion": "dbminer.runner.package.v1alpha1",
   "id": "com.dbminer.pick-columns",
   "version": "0.1.0",
-  "abi": "dbminer.runner.v1alpha1",
+  "abi": "dbminer.runner.v1alpha2",
   "implementation": "wasm",
   "entrypoint": "runner.wasm",
   "configSchema": "config.schema.json",

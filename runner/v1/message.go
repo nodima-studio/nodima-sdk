@@ -9,7 +9,7 @@ import (
 	"fmt"
 )
 
-const ABIVersion = "dbminer.runner.v1alpha1"
+const ABIVersion = "dbminer.runner.v1alpha2"
 
 type MessageType string
 
@@ -19,10 +19,14 @@ const (
 	MessageInputBatch  MessageType = "input_batch"
 	MessageOutputBatch MessageType = "output_batch"
 	MessageInputEnd    MessageType = "input_end"
-	MessageCompleted   MessageType = "completed"
-	MessageFailed      MessageType = "failed"
-	MessageLog         MessageType = "log"
-	MessageProgress    MessageType = "progress"
+	// MessageStopInput is emitted by a ready runner to tell its host it will
+	// not consume a declared input port further. The host may then stop that
+	// edge without treating the missing natural EOF as an error.
+	MessageStopInput MessageType = "stop_input"
+	MessageCompleted MessageType = "completed"
+	MessageFailed    MessageType = "failed"
+	MessageLog       MessageType = "log"
+	MessageProgress  MessageType = "progress"
 	// MessageHostResources is emitted only by a trusted execution host or
 	// agent. Runner implementations must not use it.
 	MessageHostResources      MessageType = "host_resources"
@@ -361,6 +365,10 @@ func (m Message) Validate() error {
 	switch m.Type {
 	case MessageInitialize:
 	case MessageReady, MessageInputEnd, MessageCompleted:
+	case MessageStopInput:
+		if m.PortID == "" {
+			return errors.New("stop_input message requires an input port")
+		}
 	case MessageBatchComplete:
 		if m.Sequence == 0 {
 			return errors.New("batch_complete message requires a sequence")

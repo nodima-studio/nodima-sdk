@@ -11,7 +11,7 @@ Licensed under the [MIT License](LICENSE).
 - `packagekit` validates, assembles, archives, and builds deterministic packages.
 - `cmd/nodima-package` exposes package building and validation workflows.
 
-The current wire identifiers intentionally remain `dbminer.runner.v1alpha1`
+The current wire identifiers intentionally remain `dbminer.runner.v1alpha2`
 and `dbminer.runner.package.v1alpha1`. They are compatibility identifiers, not
 display branding, and changing them would invalidate existing projects,
 packages, agents, and archives.

@@ -56,17 +56,20 @@ const (
 )
 
 type Manifest struct {
-	FormatVersion  string                   `json:"formatVersion"`
-	ID             string                   `json:"id"`
-	Version        string                   `json:"version"`
-	ABI            string                   `json:"abi"`
-	Implementation ImplementationKind       `json:"implementation"`
-	Entrypoint     string                   `json:"entrypoint"`
-	ConfigSchema   string                   `json:"configSchema"`
-	Icon           string                   `json:"icon,omitempty"`
-	UI             string                   `json:"ui,omitempty"`
-	Readme         string                   `json:"readme,omitempty"`
-	Behavior       ExecutionBehavior        `json:"behavior"`
+	FormatVersion  string             `json:"formatVersion"`
+	ID             string             `json:"id"`
+	Version        string             `json:"version"`
+	ABI            string             `json:"abi"`
+	Implementation ImplementationKind `json:"implementation"`
+	Entrypoint     string             `json:"entrypoint"`
+	ConfigSchema   string             `json:"configSchema"`
+	Icon           string             `json:"icon,omitempty"`
+	UI             string             `json:"ui,omitempty"`
+	Readme         string             `json:"readme,omitempty"`
+	Behavior       ExecutionBehavior  `json:"behavior"`
+	// StopWhenUnused lets the host terminate the runner once all output
+	// consumers explicitly stop. It defaults to false for side-effect safety.
+	StopWhenUnused bool                     `json:"stopWhenUnused,omitempty"`
 	Distribution   *Distribution            `json:"distribution,omitempty"`
 	Ports          []Port                   `json:"ports"`
 	Capabilities   []Capability             `json:"capabilities"`

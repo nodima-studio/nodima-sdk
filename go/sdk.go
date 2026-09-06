@@ -21,6 +21,16 @@ type Output interface {
 	Emit(context.Context, runnerv1.Message) error
 }
 
+// StopInput emits the runner-to-host control that explicitly ends one input.
+// Runners should call it only after ready and only for a declared input port.
+func StopInput(ctx context.Context, output Output, executionID, nodeID, portID string) error {
+	message := runnerv1.NewMessage(runnerv1.MessageStopInput)
+	message.ExecutionID = executionID
+	message.NodeID = nodeID
+	message.PortID = portID
+	return output.Emit(ctx, message)
+}
+
 type Runner interface {
 	Run(context.Context, Input, Output) error
 }
