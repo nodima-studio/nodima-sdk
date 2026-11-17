@@ -166,7 +166,10 @@ links, peer edges, limits, and optional ephemeral TLS material. For peer runs,
 answers `session_connected` only after its listeners, authentication, and edge
 multiplexers are ready. `session_run` is the sole runner-start barrier.
 `session_completed`, per-node results, and `edge_stats` close the session and
-report the logical project-edge measurements.
+report the logical project-edge measurements. `session_completed` carries the
+target's bounded `preview` for a targeted run and optional `node_samples`: one
+small output sample per other node the agent ran, together at most
+`MaxSessionSampleBytes` of values, so a client can inspect any node afterwards.
 
 `cancel` asks an agent to stop. It is best effort; closing the transport is the
 guarantee, because SSH cannot be relied on to deliver a signal.

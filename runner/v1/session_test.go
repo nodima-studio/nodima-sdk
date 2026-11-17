@@ -109,3 +109,38 @@ func TestSessionPreviewIsBounded(t *testing.T) {
 		t.Fatalf("row-width error = %v", err)
 	}
 }
+
+func TestSessionCompletedBoundsNodeSamples(t *testing.T) {
+	value := "value"
+	sample := func(nodeID string) SessionNodeSample {
+		return SessionNodeSample{NodeID: nodeID, Sample: SessionPreview{Ports: []SessionPreviewPort{{
+			PortID:       "output",
+			Columns:      []SessionPreviewColumn{{Name: "value", Type: "string"}},
+			Rows:         [][]*string{{&value}},
+			RowsProduced: 10,
+		}}}}
+	}
+	completed := SessionCompleted{NodeSamples: []SessionNodeSample{sample("a"), sample("b")}}
+	if err := completed.Validate(); err != nil {
+		t.Fatalf("valid samples error = %v", err)
+	}
+	completed.NodeSamples[1].NodeID = "a"
+	if err := completed.Validate(); err == nil || !strings.Contains(err.Error(), "repeats node") {
+		t.Fatalf("duplicate-node error = %v", err)
+	}
+	completed.NodeSamples[1].NodeID = ""
+	if err := completed.Validate(); err == nil || !strings.Contains(err.Error(), "requires a node ID") {
+		t.Fatalf("missing-node error = %v", err)
+	}
+
+	large := strings.Repeat("x", 1<<19)
+	many := make([]SessionNodeSample, 9)
+	for index := range many {
+		many[index] = sample(string(rune('a' + index)))
+		many[index].Sample.Ports[0].Rows = [][]*string{{&large}}
+	}
+	completed = SessionCompleted{NodeSamples: many}
+	if err := completed.Validate(); err == nil || !strings.Contains(err.Error(), "bounded snapshot") {
+		t.Fatalf("total-limit error = %v", err)
+	}
+}

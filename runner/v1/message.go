@@ -397,8 +397,8 @@ func (m Message) Validate() error {
 		}
 	case MessageSessionConnected, MessageSessionRun:
 	case MessageSessionCompleted:
-		if m.SessionCompleted != nil && m.SessionCompleted.Preview != nil {
-			if err := m.SessionCompleted.Preview.Validate(); err != nil {
+		if m.SessionCompleted != nil {
+			if err := m.SessionCompleted.Validate(); err != nil {
 				return err
 			}
 		}

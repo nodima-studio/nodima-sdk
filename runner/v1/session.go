@@ -218,7 +218,68 @@ type EdgeStats struct {
 }
 
 type SessionCompleted struct {
+	// Preview is the target node's output sample for a targeted run.
 	Preview *SessionPreview `cbor:"preview,omitempty"`
+	// NodeSamples are small output samples of the session's other nodes, so a
+	// client can inspect any node after a run. Each is bounded like Preview and
+	// the list together by MaxSessionSampleBytes.
+	NodeSamples []SessionNodeSample `cbor:"node_samples,omitempty"`
+}
+
+// MaxSessionSampleBytes bounds the value bytes of all node samples one
+// session reports, leaving room for the target preview within one frame.
+const MaxSessionSampleBytes = 4 << 20
+
+// SessionNodeSample is one node's bounded output sample.
+type SessionNodeSample struct {
+	NodeID string         `cbor:"node_id"`
+	Sample SessionPreview `cbor:"sample"`
+}
+
+// Validate checks the target preview and every node sample against their
+// bounds.
+func (c SessionCompleted) Validate() error {
+	if c.Preview != nil {
+		if err := c.Preview.Validate(); err != nil {
+			return err
+		}
+	}
+	if len(c.NodeSamples) > MaxSessionNodes {
+		return errors.New("session_completed has too many node samples")
+	}
+	nodes := make(map[string]struct{}, len(c.NodeSamples))
+	total := 0
+	for _, sample := range c.NodeSamples {
+		if sample.NodeID == "" {
+			return errors.New("session node sample requires a node ID")
+		}
+		if _, duplicate := nodes[sample.NodeID]; duplicate {
+			return fmt.Errorf("session node sample repeats node %q", sample.NodeID)
+		}
+		nodes[sample.NodeID] = struct{}{}
+		if err := sample.Sample.Validate(); err != nil {
+			return fmt.Errorf("session node sample %q: %w", sample.NodeID, err)
+		}
+		total += sample.Sample.valueBytes()
+	}
+	if total > MaxSessionSampleBytes {
+		return errors.New("session node samples exceed their bounded snapshot limit")
+	}
+	return nil
+}
+
+func (p SessionPreview) valueBytes() int {
+	bytes := 0
+	for _, port := range p.Ports {
+		for _, row := range port.Rows {
+			for _, value := range row {
+				if value != nil {
+					bytes += len(*value)
+				}
+			}
+		}
+	}
+	return bytes
 }
 
 type SessionPreview struct {
